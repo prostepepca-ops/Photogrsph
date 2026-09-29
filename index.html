@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#121212">
+    <title>ExpoLoc - Fire/Photo</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --accent-color: #ff9800;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        header {
+            padding: calc(10px + var(--safe-area-top)) 15px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid #333;
+            z-index: 10;
+            font-size: 0.85rem;
+        }
+
+        #camera-brand {
+            background: #2a2a2a;
+            color: var(--text-color);
+            border: 1px solid #444;
+            padding: 4px 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000; 
+        }
+
+        .sub-controls {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 5;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .manual-ev-container {
+            z-index: 2;
+            margin-bottom: 10px;
+        }
+
+        #manual-ev-select {
+            background: rgba(30, 30, 30, 0.9);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            font-weight: 500;
+        }
+
+        #target-ev {
+            z-index: 2;
+            font-size: 3.2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            font-weight: 300;
+            cursor: pointer;
+            padding: 5px 15px;
+            border-radius: 8px;
+            border: 1px dashed transparent;
+            transition: border-color 0.2s;
+        }
+        #target-ev:active {
+            border-color: var(--accent-color);
+            background: rgba(255,152,0,0.1);
+        }
+
+        nav.modes {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: #1e1e1e;
+            border-top: 1px solid #333;
+            z-index: 10;
+        }
+
+        section.controls {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 10px calc(15px + var(--safe-area-bottom));
+            background: #121212;
+            z-index: 10;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: 1px solid #555;
+            color: #ccc;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .mode-btn.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .control-dial {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-dial label {
+            font-size: 0.7rem;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        .control-btn {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: #2a2a2a;
+            border: 2px solid #444;
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .control-btn.locked {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .flash-badge {
+            border-color: #03a9f4;
+            color: #03a9f4;
+        }
+
+        .control-btn.disabled {
+            opacity: 0.3;
+            border-color: #333;
+            color: #555;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header id="status-bar">
+        <div id="gps-status">GPS: Čekám...</div>
+        <div id="hw-profile">
+            <select id="camera-brand">
+                <option value="1.5">Nikon</option>
+                <option value="1.6">Canon</option>
+            </select>
+        </div>
+    </header>
+
+    <main id="viewfinder">
+        <div class="sub-controls">
+            <label><input type="checkbox" id="no-flash-toggle"> Bez blesku (Ambient)</label>
+            <label><input type="checkbox" id="smoke-toggle"> Zamořeno / Kouř</label>
+        </div>
+
+        <video id="camera-stream" autoplay playsinline webkit-playsinline muted style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; opacity: 0.3; pointer-events: none;"></video>
+        
+        <div class="manual-ev-container">
+            <select id="manual-ev-select">
+                <option value="auto">⚡ Auto (Měření kamery)</option>
+                <option value="15">☀️ Přímé slunce (15 EV)</option>
+                <option value="13">⛅ Zataženo / Jasno (13 EV)</option>
+                <option value="12">🌳 Stín venku (12 EV)</option>
+                <option value="10">💡 Jasný interiér / Kancelář (10 EV)</option>
+                <option value="7">🏠 Běžný interiér / Večer (7 EV)</option>
+                <option value="4">🕯️ Šero / Svíčka (4 EV)</option>
+                <option value="0">🌙 Noc / Tma (0 EV)</option>
+            </select>
+        </div>
+
+        <div id="target-ev">14.0 EV</div>
+    </main>
+
+    <nav class="modes">
+        <!-- Přidána jednoznačná ID pro bezpečné přepínání režimů -->
+        <button class="mode-btn active" id="btn-exterior">Exteriér</button>
+        <button class="mode-btn" id="btn-interior">Interiér</button>
+    </nav>
+
+    <section class="controls">
+        <div class="control-dial">
+            <label>ČAS</label>
+            <div class="control-btn locked" id="btn-shutter">1/125</div>
+        </div>
+
+        <div class="control-dial">
+            <label>CLONA</label>
+            <div class="control-btn locked" id="btn-aperture">f/8</div>
+        </div>
+
+        <div class="control-dial">
+            <label>ISO</label>
+            <div class="control-btn locked" id="btn-iso">100</div>
+        </div>
+
+        <div class="control-dial">
+            <label>BLESK</label>
+            <div class="control-btn flash-badge locked" id="btn-flash">1/16</div>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>
